@@ -7,17 +7,12 @@
 <script>
 const SB_URL='https://cczwffmbjythssnvlund.supabase.co';
 const SB_KEY='sb_publishable_oPe8Cwc_QbtzMqWDZ9YLIQ_dyCyeHi2';
+const ADMIN_URL='https://sukkurbazaradmin.netlify.app/';
 const SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
-function getOAuthRedirect(){
-  // Google OAuth must return to the live Netlify admin app, not localhost.
-  const liveAdmin='https://sukkurbazaradmin.netlify.app/';
-  const origin=window.location.origin;
-  if(origin==='http://localhost:3000' || origin==='http://localhost:8158' || origin==='http://127.0.0.1:3000' || origin==='http://127.0.0.1:8158' || origin==='null' || origin==='file://'){
-    return liveAdmin;
-  }
-  if(origin==='https://sukkurbazaradmin.netlify.app') return liveAdmin;
-  return liveAdmin;
-}
+
+// Always send Google OAuth back to the live Admin Panel. Never use localhost.
+function getOAuthRedirect(){ return ADMIN_URL; }
+
 async function finishOAuthCallback(){
   try{
     const params=new URLSearchParams(window.location.search);
@@ -26,26 +21,67 @@ async function finishOAuthCallback(){
       const {data,error}=await SB.auth.exchangeCodeForSession(code);
       if(error) throw error;
       if(data?.session){
-        window.history.replaceState({},document.title,window.location.pathname);
+        window.history.replaceState({},document.title,'/');
         return data.session;
       }
     }
-    const {data}=await SB.auth.getSession();
+    const {data,error}=await SB.auth.getSession();
+    if(error) throw error;
     return data?.session||null;
   }catch(e){
     console.warn('OAuth callback',e);
     return null;
   }
 }
+
 let dbReady=false, dbUser=null;
+
+async function verifyAdminUser(user){
+  if(!user?.id) return false;
+  try{
+    const {data,error}=await SB.from('profiles').select('role').eq('id',user.id).maybeSingle();
+    if(error) throw error;
+    if(data?.role!=='admin'){
+      await SB.auth.signOut();
+      toast('This Google account is not an Admin account.');
+      return false;
+    }
+    dbUser=user;
+    dbReady=true;
+    return true;
+  }catch(e){
+    console.warn('Admin verification',e);
+    await SB.auth.signOut().catch(()=>{});
+    toast('Admin verification failed. Check the profiles table.');
+    return false;
+  }
+}
+
+async function enterAdminSession(session){
+  const user=session?.user;
+  if(!user || !(await verifyAdminUser(user))){
+    state.auth=false;
+    document.getElementById('app')?.classList.add('hidden');
+    document.getElementById('auth')?.classList.remove('hidden');
+    authMode('login');
+    return false;
+  }
+  state.auth=true;
+  state.page='dashboard';
+  state.history=[];
+  document.getElementById('auth')?.classList.add('hidden');
+  document.getElementById('app')?.classList.remove('hidden');
+  try{ await dbLoadAll(); save(); render(); }catch(e){ console.warn('Initial database load',e); render(); }
+  return true;
+}
+
 SB.auth.onAuthStateChange((event,session)=>{
   dbUser=session?.user||null;
   dbReady=!!dbUser;
-  if(event==='SIGNED_IN' && session){
-    setTimeout(()=>enterAdminSession(session),0);
-  }
+  if(event==='SIGNED_IN' && session) setTimeout(()=>enterAdminSession(session),0);
   if(event==='SIGNED_OUT'){
     state.auth=false;
+    dbUser=null; dbReady=false;
     document.getElementById('app')?.classList.add('hidden');
     document.getElementById('auth')?.classList.remove('hidden');
     authMode('login');
@@ -53,90 +89,16 @@ SB.auth.onAuthStateChange((event,session)=>{
 });
 
 async function dbBoot(){
-  try{
-    await finishOAuthCallback();
-    const {data,error}=await SB.auth.getSession();
-    if(error) throw error;
-    dbUser=data.session?.user||null;
-    if(dbUser){dbReady=true; return true;}
-  }catch(e){console.warn('Supabase startup',e)}
-  return false;
+  const session=await finishOAuthCallback();
+  if(!session) return false;
+  return await enterAdminSession(session);
 }
+
 async function dbRequireAdmin(){
-  if(!dbUser){const r=await dbBoot(); if(!r)return false;}
+  if(!dbUser){ const ok=await dbBoot(); if(!ok) return false; }
   return await verifyAdminUser(dbUser);
 }
-async function dbLoadAll(){
-  if(!dbUser)return;
-  try{
-    const {data:cats,error:ce}=await SB.from('categories').select('*').order('name');
-    if(!ce&&cats) state.categories=cats.map(c=>({id:c.id,name:c.name,icon:c.icon||c.emoji||'🛍️',image:c.image_url||c.image||'',active:c.active!==false}));
-    const {data:settings,error:se}=await SB.from('marketplace_settings').select('*').limit(1).maybeSingle();
-    if(!se&&settings){
-      state.market={...state.market,name:settings.name||settings.marketplace_name||settings.title||state.market.name,tagline:settings.tagline||state.market.tagline,supportPhone:settings.support_phone||settings.phone||state.market.supportPhone,supportWhatsapp:settings.support_whatsapp||settings.whatsapp||state.market.supportWhatsapp,address:settings.address||state.market.address,logo:settings.logo_url||settings.logo||state.market.logo};
-    }
-    const {data:ads,error:ae}=await SB.from('banner_ads').select('*').order('sort_order',{ascending:true});
-    if(!ae&&ads) state.ads=ads.map(a=>({id:a.id,business:a.business_name||a.seller_name||'',title:a.title||a.name||'',start:a.start_date||'',end:a.end_date||'',image:a.image_url||a.image||'',active:a.active!==false,description:a.description||''}));
-    const {data:shops}=await SB.from('shops').select('*');
-    if(shops) state.sellers=shops.map(x=>({id:x.id,name:x.name||x.shop_name||'',phone:x.phone||'',shop:x.name||x.shop_name||'',category:x.category||'',address:x.address||'',status:x.status||'Active',open:x.is_open!==false}));
-    const {data:products}=await SB.from('products').select('*,categories(name)').order('created_at',{ascending:false});
-    if(products) state.products=products.map(x=>({id:x.id,name:x.name,shop:x.shop_name||x.shop?.name||'',category:x.categories?.name||x.category||'',price:x.price,stock:x.stock,status:x.status||'Active',image:x.main_image_url||x.image_url||'',sku:x.sku||'',description:x.description||''}));
-    const {data:orders}=await SB.from('orders').select('*').order('created_at',{ascending:false});
-    if(orders) state.orders=orders.map(o=>({id:o.order_number||o.id,customer:o.customer_name||'',phone:o.customer_phone||'',shop:o.shop_name||'',total:o.total,payment:o.payment||'',delivery:o.delivery||'',status:o.status||'New',date:o.created_at||''}));
-    save();
-  }catch(e){console.warn('Supabase admin load',e)}
-}
-async function uploadAdminImage(file,folder){
-  if(!file)return '';
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-  const path=`admin/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const {error}=await SB.storage.from('marketplace-images').upload(path,file,{upsert:true,contentType:file.type});
-  if(error)throw error;
-  return SB.storage.from('marketplace-images').getPublicUrl(path).data.publicUrl;
-}
-async function dbSaveCategory(i){
-  if(!await dbRequireAdmin())return false;
-  const x=state.categories[i];
-  try{
-    const payload={name:x.name,icon:x.icon||'🛍️',active:x.active!==false};
-    if(x.image&&/^https?:/.test(x.image)) payload.image_url=x.image;
-    let r;
-    if(x._new){r=await SB.from('categories').insert(payload).select().single();}
-    else r=await SB.from('categories').update(payload).eq('id',x.id).select().single();
-    if(r.error && /image_url/i.test(r.error.message)){delete payload.image_url;r=x._new?await SB.from('categories').insert(payload).select().single():await SB.from('categories').update(payload).eq('id',x.id).select().single();}
-    if(r.error)throw r.error;
-    Object.assign(x,r.data);delete x._new;return true;
-  }catch(e){toast('Category DB save failed: '+e.message);return false}
-}
-async function dbDeleteCategory(id){if(!await dbRequireAdmin())return false;const {error}=await SB.from('categories').delete().eq('id',id);if(error){toast('Category delete failed: '+error.message);return false}return true}
-async function dbSaveMarket(){
-  if(!await dbRequireAdmin())return false;
-  try{
-    const {data:row,error:re}=await SB.from('marketplace_settings').select('*').limit(1).maybeSingle(); if(re)throw re;
-    const payload={}; const keys=row?Object.keys(row):[];
-    const put=(cands,val)=>{const k=cands.find(k=>keys.includes(k));if(k&&val!==undefined)payload[k]=val};
-    put(['name','marketplace_name','title'],state.market.name);put(['tagline'],state.market.tagline);put(['support_phone','phone'],state.market.supportPhone);put(['support_whatsapp','whatsapp'],state.market.supportWhatsapp);put(['address'],state.market.address);put(['logo_url','logo','logo_url_path'],state.market.logo);
-    let r;
-    if(row?.id){r=await SB.from('marketplace_settings').update(payload).eq('id',row.id).select().single();}
-    else {if(!Object.keys(payload).length)throw new Error('marketplace_settings columns not recognized');r=await SB.from('marketplace_settings').insert(payload).select().single();}
-    if(r.error)throw r.error;return true;
-  }catch(e){toast('Marketplace DB save failed: '+e.message);return false}
-}
-async function dbSaveAd(ad){
-  if(!await dbRequireAdmin())return false;
-  try{
-    const payload={title:ad.title,active:ad.active!==false,sort_order:state.ads.indexOf(ad)};
-    if(ad.description)payload.description=ad.description;
-    if(ad.image&&/^https?:/.test(ad.image))payload.image_url=ad.image;
-    const {data:existing}=await SB.from('banner_ads').select('*').eq('id',ad.id).maybeSingle();
-    let r;
-    if(existing) r=await SB.from('banner_ads').update(payload).eq('id',ad.id).select().single();
-    else r=await SB.from('banner_ads').insert(payload).select().single();
-    if(r.error && /image_url|description/i.test(r.error.message)){delete payload.image_url;delete payload.description;r=existing?await SB.from('banner_ads').update(payload).eq('id',ad.id).select().single():await SB.from('banner_ads').insert(payload).select().single();}
-    if(r.error)throw r.error;Object.assign(ad,r.data);return true;
-  }catch(e){toast('Banner DB save failed: '+e.message);return false}
-}
-async function dbDeleteAd(id){if(!await dbRequireAdmin())return false;const {error}=await SB.from('banner_ads').delete().eq('id',id);if(error){toast('Banner delete failed: '+error.message);return false}return true}
+
 const KEY='sukkur_bazar_admin_panel_v3';
 const seed={auth:false,authMode:'login',page:'dashboard',history:[],accounts:[{id:'admin@sukkurbazar',name:'Sukkur Bazar Admin',phone:'',password:'admin123'}],admin:{name:'Sukkur Bazar Admin',phone:'',profile:''},market:{name:'Sukkur Bazar',tagline:'Har Zaroorat, Ab Aapke Shehar Mein.',logo:'',supportPhone:'',supportWhatsapp:'',address:''},categories:[{id:1,name:'Grocery',icon:'🛒',active:true},{id:2,name:'Beauty & Cosmetics',icon:'💄',active:true},{id:3,name:'Fashion',icon:'👕',active:true},{id:4,name:'Electronics',icon:'📱',active:true}],deals:[{id:1,title:'Up to 50%',subtitle:'Beauty & Cosmetics',category:'Beauty & Cosmetics',active:true},{id:2,title:'Daily Deals',subtitle:'Grocery essentials',category:'Grocery',active:true},{id:3,title:'Flash Sale',subtitle:'Electronics & accessories',category:'Electronics',active:true},{id:4,title:'New Arrivals',subtitle:'Fashion & lifestyle',category:'Fashion',active:true}],sellers:[{id:1,name:'Ali',phone:'03324423708',shop:'Al-Madina Store',category:'Grocery',address:'Sukkur, Sindh',status:'Active',open:true},{id:2,name:'Ahmed',phone:'03001234567',shop:'Sukkur Super Mart',category:'Grocery',address:'Military Road, Sukkur',status:'Pending',open:true}],customers:[{id:1,name:'Customer Demo',phone:'03000000000',orders:2,status:'Active',created:'22/08/2026'},{id:2,name:'Ali',phone:'03324423708',orders:1,status:'Active',created:'22/08/2026'},{id:3,name:'Ahmed',phone:'03001234567',orders:1,status:'Active',created:'22/08/2026'}],products:[{id:1,name:'Premium Basmati Rice 5kg',shop:'Al-Madina Store',category:'Grocery',price:1450,stock:25,status:'Active'},{id:2,name:'Cooking Oil 5 Litre',shop:'Sukkur Super Mart',category:'Grocery',price:2750,stock:3,status:'Active'},{id:3,name:'Long Lasting Perfume',shop:'Glow Cosmetics',category:'Beauty & Cosmetics',price:899,stock:12,status:'Active'}],orders:[{id:'SB-05166839',customer:'Ali',phone:'03324423708',shop:'Al-Madina Store',total:1600,payment:'Cash on Delivery',delivery:'Sukkur Bazar Delivery',status:'New',date:'22/08/2026'},{id:'SB-05166810',customer:'Ahmed',phone:'03001234567',shop:'Al-Madina Store',total:1948,payment:'JazzCash',delivery:'Seller Delivery',status:'Processing',date:'22/08/2026'}],complaints:[{id:1,name:'Customer Demo',phone:'03000000000',subject:'Need help with order',message:'Please contact me regarding my order.',date:'Today',status:'New'}],notifications:[{id:1,title:'New seller signup',text:'A seller is waiting for review.',time:'Just now',read:false},{id:2,title:'Low stock alert',text:'Cooking Oil 5 Litre is low in stock.',time:'Today',read:false}],ads:[],delivery:[{id:1,seller:'Al-Madina Store',type:'Admin / Sukkur Bazar Delivery',status:'Active',note:'Internal arrangement'}]};
 let state=JSON.parse(JSON.stringify(seed));
@@ -198,21 +160,15 @@ function resolveComplaint(i){state.complaints[i].status=state.complaints[i].stat
 async function toggleAd(i){state.ads[i].active=!state.ads[i].active;if(!(await dbSaveAd(state.ads[i]))){state.ads[i].active=!state.ads[i].active;return}save();render()}
 function addDelivery(){simpleForm('Add Delivery Arrangement',[['Seller / Shop','seller',''],['Delivery Type','type','Seller Self Delivery'],['Internal Note','note','']],o=>{if(!o.seller)return toast('Seller / Shop is required');state.delivery.push({id:Date.now(),seller:o.seller,type:o.type,status:'Active',note:o.note});save();go('delivery')})}function editDelivery(i){let x=state.delivery[i];simpleForm('Edit Delivery Arrangement',[['Seller / Shop','seller',x.seller],['Delivery Type','type',x.type],['Internal Note','note',x.note]],o=>{Object.assign(x,o);save();go('delivery')})}
 function readImage(input,target){let f=input.files[0];if(!f)return;let r=new FileReader();r.onload=e=>{window._pendingImage=e.target.result;document.getElementById(target).innerHTML=`<img class="preview" src="${e.target.result}">`};r.readAsDataURL(f)}async function saveMarket(){Object.assign(state.market,{name:document.getElementById('m_name').value.trim()||'Sukkur Bazar',tagline:document.getElementById('m_tag').value.trim(),supportPhone:document.getElementById('m_phone').value.trim(),supportWhatsapp:document.getElementById('m_wa').value.trim(),address:document.getElementById('m_addr').value.trim()});const f=document.querySelector('#marketPreview')?.previousElementSibling?.files?.[0];if(f){try{state.market.logo=await uploadAdminImage(f,'branding')}catch(e){return toast('Logo upload failed: '+e.message)}}else if(window._pendingImage){state.market.logo=window._pendingImage;window._pendingImage=null}if(!(await dbSaveMarket()))return;save();render();toast('Marketplace profile saved ✓')}function saveAdminProfile(){state.admin.name=document.getElementById('a_name').value.trim()||'Admin';state.admin.phone=document.getElementById('a_phone').value.trim();if(window._pendingImage){state.admin.profile=window._pendingImage;window._pendingImage=null}let a=state.accounts[0];if(a){a.name=state.admin.name;a.phone=state.admin.phone}save();render();toast('Admin profile saved')}
-load();try{syncDealsToShopping()}catch(e){};
+load();try{syncDealsToShopping()}catch(e){}
 setTimeout(async()=>{
   document.getElementById('splash').classList.add('hidden');
   const session=await finishOAuthCallback();
   if(session){
     await enterAdminSession(session);
   }else{
-    const ok=await dbBoot();
-    if(ok){
-      await enterAdminSession({user:dbUser});
-    }else{
-      state.auth=false;
-      document.getElementById('auth').classList.remove('hidden');
-      authMode('login');
-    }
+    document.getElementById('auth').classList.remove('hidden');
+    authMode('login');
   }
-},900);
+},700);
 </script></body></html>
