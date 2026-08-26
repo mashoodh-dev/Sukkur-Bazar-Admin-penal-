@@ -104,23 +104,20 @@ function authMode(){
   state.authMode='google';
   document.getElementById('authTitle').textContent='Admin Access';
   document.getElementById('authText').textContent='Only the authorized Google Admin account can access this panel.';
-  document.getElementById('authForm').innerHTML=`<button class="btn" style="width:100%;margin-top:4px" onclick="googleAdmin()">Continue with Google</button>`;
+  document.getElementById('authForm').innerHTML=`<button class="btn" style="width:100%;margin-top:12px" onclick="googleAdmin()">Continue with Google</button>`;
 }
 const GOOGLE_CLIENT_ID='45077632541-3ge0j47jf4tf8b4963hvn1tv3un60ofr.apps.googleusercontent.com';
 const SHARED_GOOGLE_CALLBACK='https://xltyakylnntzlxhcggil.supabase.co/auth/v1/callback';
 
-// Same Google OAuth method used by the Seller and Shopping apps.
-// The Google Client ID is kept here for reference; Supabase OAuth uses
-// the Google provider configured in the shared Supabase project.
+// Same Google OAuth method as Seller and Shopping apps.
+// No Google Identity Services, no ID-token login, and no manual token handling.
 async function googleAdmin(){
   try{
-    const {data,error}=await SB.auth.signInWithOAuth({
+    const {error}=await SB.auth.signInWithOAuth({
       provider:'google',
-      options:{redirectTo:ADMIN_URL}
+      options:{redirectTo:window.location.origin+window.location.pathname}
     });
     if(error) throw error;
-    // Supabase redirects the browser to Google automatically.
-    return data;
   }catch(e){
     console.error('Admin Google OAuth failed:',e);
     toast(e?.message||'Google sign-in failed');
