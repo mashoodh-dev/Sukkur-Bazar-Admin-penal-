@@ -31,7 +31,8 @@ let dbReady=false, dbUser=null;
 
 async function verifyAdminUser(user){
   if(!user?.id) return false;
-  dbUser=user; dbReady=true;
+  dbUser=user;
+  dbReady=true;
   return true;
 }
 
@@ -54,7 +55,7 @@ async function enterAdminSession(session){
 }
 
 SB.auth.onAuthStateChange((event,session)=>{
-  if(session?.user && (event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')){
+  if(event==='SIGNED_IN' && session){
     setTimeout(()=>enterAdminSession(session),0);
   }
   if(event==='SIGNED_OUT'){
@@ -81,53 +82,74 @@ const KEY='sukkur_bazar_admin_panel_v3';
 const seed={auth:false,authMode:'login',page:'dashboard',history:[],accounts:[],admin:{name:'Sukkur Bazar Admin',phone:'',profile:''},market:{name:'Sukkur Bazar',tagline:'Har Zaroorat, Ab Aapke Shehar Mein.',logo:'',supportPhone:'',supportWhatsapp:'',address:''},categories:[{id:1,name:'Grocery',icon:'🛒',active:true},{id:2,name:'Beauty & Cosmetics',icon:'💄',active:true},{id:3,name:'Fashion',icon:'👕',active:true},{id:4,name:'Electronics',icon:'📱',active:true}],deals:[{id:1,title:'Up to 50%',subtitle:'Beauty & Cosmetics',category:'Beauty & Cosmetics',active:true},{id:2,title:'Daily Deals',subtitle:'Grocery essentials',category:'Grocery',active:true},{id:3,title:'Flash Sale',subtitle:'Electronics & accessories',category:'Electronics',active:true},{id:4,title:'New Arrivals',subtitle:'Fashion & lifestyle',category:'Fashion',active:true}],sellers:[{id:1,name:'Ali',phone:'03324423708',shop:'Al-Madina Store',category:'Grocery',address:'Sukkur, Sindh',status:'Active',open:true},{id:2,name:'Ahmed',phone:'03001234567',shop:'Sukkur Super Mart',category:'Grocery',address:'Military Road, Sukkur',status:'Pending',open:true}],customers:[{id:1,name:'Customer Demo',phone:'03000000000',orders:2,status:'Active',created:'22/08/2026'},{id:2,name:'Ali',phone:'03324423708',orders:1,status:'Active',created:'22/08/2026'},{id:3,name:'Ahmed',phone:'03001234567',orders:1,status:'Active',created:'22/08/2026'}],products:[{id:1,name:'Premium Basmati Rice 5kg',shop:'Al-Madina Store',category:'Grocery',price:1450,stock:25,status:'Active'},{id:2,name:'Cooking Oil 5 Litre',shop:'Sukkur Super Mart',category:'Grocery',price:2750,stock:3,status:'Active'},{id:3,name:'Long Lasting Perfume',shop:'Glow Cosmetics',category:'Beauty & Cosmetics',price:899,stock:12,status:'Active'}],orders:[{id:'SB-05166839',customer:'Ali',phone:'03324423708',shop:'Al-Madina Store',total:1600,payment:'Cash on Delivery',delivery:'Sukkur Bazar Delivery',status:'New',date:'22/08/2026'},{id:'SB-05166810',customer:'Ahmed',phone:'03001234567',shop:'Al-Madina Store',total:1948,payment:'JazzCash',delivery:'Seller Delivery',status:'Processing',date:'22/08/2026'}],complaints:[{id:1,name:'Customer Demo',phone:'03000000000',subject:'Need help with order',message:'Please contact me regarding my order.',date:'Today',status:'New'}],notifications:[{id:1,title:'New seller signup',text:'A seller is waiting for review.',time:'Just now',read:false},{id:2,title:'Low stock alert',text:'Cooking Oil 5 Litre is low in stock.',time:'Today',read:false}],ads:[],delivery:[{id:1,seller:'Al-Madina Store',type:'Admin / Sukkur Bazar Delivery',status:'Active',note:'Internal arrangement'}]};
 let state=JSON.parse(JSON.stringify(seed));
 function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)state={...state,...x};if(!Array.isArray(state.deals))state.deals=seed.deals.map(x=>({...x}));if(!Array.isArray(state.categories))state.categories=seed.categories.map(x=>({...x}))}catch(e){}}function save(){localStorage.setItem(KEY,JSON.stringify(state))}function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function money(x){return 'Rs. '+Number(x||0).toLocaleString('en-PK')}function toast(t){let e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window._t);window._t=setTimeout(()=>e.style.display='none',2200)}
-function authMode(mode='login'){
-  state.authMode=mode;
-  document.getElementById('authTitle').textContent='Sukkur Bazar';
-  document.getElementById('authText').textContent='Login or create an account';
+function authMode(m){
+  state.authMode=m||'login';
+  renderAuth();
+}
+function renderAuth(){
   const f=document.getElementById('authForm');
-  if(mode==='login'){
-    f.innerHTML=`<form onsubmit="submitAuth(event,'login')">
-      <label>Email</label><input id="aEmail" class="input" type="email" placeholder="you@example.com" required>
-      <label>Password</label><input id="aPass" class="input" type="password" placeholder="Enter password" required>
+  if(state.authMode==='login'){
+    f.innerHTML=`<form onsubmit="submitAuth(event)">
+      <label>Email</label>
+      <input id="aEmail" class="input" type="email" placeholder="you@example.com" required>
+      <label>Password</label>
+      <input id="aPass" class="input" type="password" placeholder="Enter password" required>
       <button class="btn" style="width:100%">Login</button>
       <div style="text-align:center;margin:12px 0;color:#718078">OR</div>
-      <button type="button" class="btn gold" style="width:100%" onclick="googleAdmin()">Continue with Google</button>
+      <button type="button" class="btn gold" style="width:100%" onclick="googleAuth()">Continue with Google</button>
       <br><br><button type="button" class="link" onclick="authMode('signup')">Create Account</button>
     </form>`;
   }else{
-    f.innerHTML=`<form onsubmit="submitAuth(event,'signup')">
-      <label>Your Name</label><input id="aName" class="input" required placeholder="Full name">
-      <label>Email</label><input id="aEmail" class="input" type="email" required placeholder="you@example.com">
-      <label>Password</label><input id="aPass" class="input" type="password" required placeholder="Create password">
+    f.innerHTML=`<form onsubmit="submitAuth(event)">
+      <label>Your Name</label>
+      <input id="aName" class="input" required placeholder="Full name">
+      <label>Email</label>
+      <input id="aEmail" class="input" type="email" required placeholder="you@example.com">
+      <label>Password</label>
+      <input id="aPass" class="input" type="password" required placeholder="Create password">
       <button class="btn" style="width:100%">Create Account</button>
       <div style="text-align:center;margin:12px 0;color:#718078">OR</div>
-      <button type="button" class="btn gold" style="width:100%" onclick="googleAdmin()">Sign up with Google</button>
+      <button type="button" class="btn gold" style="width:100%" onclick="googleAuth()">Sign up with Google</button>
       <br><br><button type="button" class="link" onclick="authMode('login')">Already have an account? Login</button>
     </form>`;
   }
 }
-async function submitAuth(e,mode){
+async function submitAuth(e){
   e.preventDefault();
+  if(state.authMode==='signup') await signUpWithEmail();
+  else await signInWithEmail();
+}
+async function signInWithEmail(){
   const email=document.getElementById('aEmail').value.trim().toLowerCase();
   const pass=document.getElementById('aPass').value;
-  try{
-    if(mode==='login'){
-      const {error}=await SB.auth.signInWithPassword({email,password:pass});
-      if(error) throw error;
-    }else{
-      const name=document.getElementById('aName').value.trim();
-      const {data,error}=await SB.auth.signUp({email,password:pass,options:{data:{full_name:name,name}}});
-      if(error) throw error;
-      if(!data.session) toast('Account created. Check your email to confirm login.');
-    }
-  }catch(e){console.error('Auth failed:',e);toast(e?.message||'Login failed')}
+  if(!email||!pass)return toast('Please enter email and password');
+  const {error}=await SB.auth.signInWithPassword({email,password:pass});
+  if(error)return toast(error.message);
 }
-async function googleAdmin(){
-  try{
-    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
-    if(error) throw error;
-  }catch(e){console.error('Google OAuth failed:',e);toast(e?.message||'Google sign-in failed')}
+async function signUpWithEmail(){
+  const email=document.getElementById('aEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('aPass').value;
+  const name=document.getElementById('aName').value.trim();
+  if(!email||!pass||!name)return toast('Please complete all fields');
+  const {data,error}=await SB.auth.signUp({
+    email,
+    password:pass,
+    options:{data:{full_name:name,name}}
+  });
+  if(error)return toast(error.message);
+  if(data.session){
+    await enterAdminSession(data.session);
+    toast('Account created ✓');
+  }else{
+    toast('Account created. Check your email to confirm login.');
+  }
+}
+async function googleAuth(){
+  const {error}=await SB.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo:window.location.origin+window.location.pathname}
+  });
+  if(error)toast(error.message);
 }
 
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
@@ -146,7 +168,7 @@ function notifications(){state.notifications.forEach(x=>x.read=true);save();retu
 function ads(){return head('Paid Banners & Advertisements','Only Admin can add and manage paid promotions')+`<div class="card"><p class="muted">Businesses or sellers who pay for promotion can have their advertisement uploaded here by Admin.</p><button class="btn gold" onclick="addAd()">＋ Add Paid Advertisement</button></div><div class="card">${state.ads.length?state.ads.map((x,i)=>`<div class="listbtn"><span>${x.image?`<img src="${x.image}" style="width:55px;height:38px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">`:''}<b>${esc(x.title)}</b><br><small class="muted">${esc(x.business)} · ${esc(x.start)} to ${esc(x.end)}</small></span><button class="btn out" onclick="toggleAd(${i})">${x.active?'Active':'Inactive'}</button></div>`).join(''):'<div class="empty">No paid advertisements yet</div>'}</div>`}
 function deals(){return head('Deals & Offers','Manage all 4 Shopping App offer cards from Admin Panel')+`<div class="card"><p class="muted">These 4 Shopping App offer cards are controlled by Admin. They are synced locally for the Shopping App; connect the same Supabase marketplace_settings/deals data when the Shopping App reads from the database.</p></div><div class="card">${state.deals.map((x,i)=>`<div class="listbtn"><span><b>${esc(x.title)}</b><br><small class="muted">${esc(x.subtitle)} · ${esc(x.category)}</small></span><button class="btn out" onclick="editDeal(${i})">Manage</button></div>`).join('')}</div>`}function editDeal(i){let x=state.deals[i];if(!x)return;simpleForm('Edit Offer Card',[['Offer Heading','title',x.title],['Offer Description','subtitle',x.subtitle],['Category','category',x.category]],o=>{x.title=o.title||x.title;x.subtitle=o.subtitle||x.subtitle;x.category=o.category||x.category;save();syncDealsToShopping();go('deals',false);toast('Offer card updated')})}function syncDealsToShopping(){try{let k='sukkur_bazar_admin_settings_v1',x=JSON.parse(localStorage.getItem(k)||'{}');x.deals=state.deals.filter(d=>d.active!==false).map(d=>({title:d.title,subtitle:d.subtitle,category:d.category}));localStorage.setItem(k,JSON.stringify(x))}catch(e){}}function delivery(){return head('Seller–Admin Delivery Arrangement','Internal arrangement between Seller and Admin — not a customer payment setting')+`<div class="card"><button class="btn" onclick="addDelivery()">＋ Add Arrangement</button></div><div class="card">${state.delivery.map((x,i)=>`<div class="listbtn"><span><b>${esc(x.seller)}</b><br><small class="muted">${esc(x.type)} · ${esc(x.note)}</small></span><span>${badge(x.status)} <button class="btn out" onclick="editDelivery(${i})">Edit</button></span></div>`).join('')}</div>`}
 function market(){return head('Marketplace Profile & Branding','Future-ready central branding for Shopping and Seller apps')+`<div class="card"><div class="row"><div><label>Marketplace / App Name</label><input id="m_name" class="input" value="${esc(state.market.name)}"></div><div><label>Tagline</label><input id="m_tag" class="input" value="${esc(state.market.tagline)}"></div><div><label>Support Phone</label><input id="m_phone" class="input" value="${esc(state.market.supportPhone)}"></div><div><label>Support WhatsApp</label><input id="m_wa" class="input" value="${esc(state.market.supportWhatsapp)}"></div></div><br><label>Business Address</label><textarea id="m_addr" class="input">${esc(state.market.address)}</textarea><br><br><label>Marketplace Logo</label><input type="file" accept="image/*" onchange="readImage(this,'marketPreview')"><div id="marketPreview">${state.market.logo?`<img class="preview" src="${state.market.logo}">`:'<small class="muted">No logo uploaded</small>'}</div><br><button class="btn" onclick="saveMarket()">Save Marketplace Profile</button></div>`}
-function settings(){return head('Admin Profile & Settings','Profile, account and security')+`<div class="card"><h2>Admin Profile</h2><div class="row"><div><label>Admin Name</label><input id="a_name" class="input" value="${esc(state.admin.name)}"></div><div><label>Mobile Number</label><input id="a_phone" class="input" value="${esc(state.admin.phone)}"></div></div><br><label>Profile Picture</label><input type="file" accept="image/*" onchange="readImage(this,'adminPreview')"><div id="adminPreview">${state.admin.profile?`<img class="preview" src="${state.admin.profile}">`:''}</div><br><button class="btn" onclick="saveAdminProfile()">Save Profile</button></div><div class="card"><h2>Security</h2><p class="muted">This panel uses the same Seller/Shopping Supabase login system.</p><button class="btn red" onclick="logout()">Logout</button></div>`}
+function settings(){return head('Admin Profile & Settings','Profile, account and security')+`<div class="card"><h2>Admin Profile</h2><div class="row"><div><label>Admin Name</label><input id="a_name" class="input" value="${esc(state.admin.name)}"></div><div><label>Mobile Number</label><input id="a_phone" class="input" value="${esc(state.admin.phone)}"></div></div><br><label>Profile Picture</label><input type="file" accept="image/*" onchange="readImage(this,'adminPreview')"><div id="adminPreview">${state.admin.profile?`<img class="preview" src="${state.admin.profile}">`:''}</div><br><button class="btn" onclick="saveAdminProfile()">Save Profile</button></div><div class="card"><h2>Security</h2><p class="muted">This Admin Panel uses Google sign-in only.</p><button class="btn red" onclick="logout()">Logout</button></div>`}
 function openMore(){modal('More Options',`<div>${[['earnings','💰 Marketplace Sales'],['customers','👥 Customers'],['categories','🗂️ Categories'],['support','💬 Support / Complaints'],['notifications','🔔 Notifications'],['ads','📢 Paid Banners & Ads'],['deals','🎯 Deals & Offers'],['delivery','🚚 Delivery Arrangement'],['market','🏷️ Marketplace Profile'],['settings','⚙️ Settings']].map(x=>`<button class="listbtn" onclick="closeModal();go('${x[0]}')">${x[1]} <b>›</b></button>`).join('')}</div>`)}
 function modal(title,html){document.getElementById('modalRoot').innerHTML=`<div class="modalroot" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modalhead"><h2>${title}</h2><button class="close" onclick="closeModal()">×</button></div>${html}</div></div>`}function closeModal(){document.getElementById('modalRoot').innerHTML=''}function logout(){modal('Logout?',`<p>Are you sure you want to logout from the Admin Panel?</p><button class="btn out" onclick="closeModal()">Cancel</button> <button class="btn red" onclick="doLogout()">Logout</button>`)}async function doLogout(){try{await SB.auth.signOut()}catch(e){}dbUser=null;dbReady=false;state.auth=false;state.history=[];save();closeModal();document.getElementById('app').classList.add('hidden');document.getElementById('auth').classList.remove('hidden');authMode()}
 function viewItem(page,i){let x=state[page][i];if(page==='customers'){let os=state.orders.filter(o=>o.customer===x.name||o.phone===x.phone),spend=os.filter(o=>o.status!=='Cancelled').reduce((a,o)=>a+Number(o.total||0),0);modal('Customer Account',`<div class="setting"><b>Name</b><span>${esc(x.name)}</span></div><div class="setting"><b>Mobile</b><span>${esc(x.phone)}</span></div><div class="setting"><b>Account Created</b><span>${esc(x.created||'Not available')}</span></div><div class="setting"><b>Total Orders</b><span>${os.length||x.orders||0}</span></div><div class="setting"><b>Total Spending</b><span>${money(spend)}</span></div><div class="setting"><b>Status</b><span>${badge(x.status)}</span></div><h3>Order History</h3>${os.map(o=>`<div class="card"><b>${esc(o.id)}</b><div class="muted">${esc(o.shop)} · ${esc(o.date||'')}</div><div style="margin-top:6px">${money(o.total)} · ${badge(o.status)}</div></div>`).join('')||'<div class="empty">No orders found for this customer.</div>'}<button class="btn ${x.status==='Active'?'red':''}" onclick="toggleCustomer(${i})">${x.status==='Active'?'Suspend / Block Account':'Activate Account'}</button>`);return}modal('Details',`<div>${Object.entries(x).map(([k,v])=>`<div class="setting"><b>${esc(k)}</b><span>${typeof v==='boolean'?(v?'Yes':'No'):esc(v)}</span></div>`).join('')}</div>`)}function toggleCustomer(i){state.customers[i].status=state.customers[i].status==='Active'?'Suspended':'Active';save();closeModal();go('customers',false);toast('Customer account updated')}
