@@ -15,19 +15,12 @@ function getOAuthRedirect(){ return ADMIN_URL; }
 
 async function finishOAuthCallback(){
   try{
-    const params=new URLSearchParams(window.location.search);
-    const code=params.get('code');
-    if(code){
-      const {data,error}=await SB.auth.exchangeCodeForSession(code);
-      if(error) throw error;
-      window.history.replaceState({},document.title,window.location.pathname);
-      if(data?.session) return data.session;
-    }
+    // Admin login uses Google Identity Services + Supabase ID-token sign-in.
     const {data,error}=await SB.auth.getSession();
     if(error) throw error;
     return data?.session||null;
   }catch(e){
-    console.warn('OAuth callback',e);
+    console.warn('Admin session check',e);
     return null;
   }
 }
@@ -111,38 +104,68 @@ function authMode(){
   state.authMode='google';
   document.getElementById('authTitle').textContent='Admin Access';
   document.getElementById('authText').textContent='Only the authorized Google Admin account can access this panel.';
-  document.getElementById('authForm').innerHTML=`<button class="btn" style="width:100%;font-size:16px;padding:14px" onclick="googleAdmin()">Continue with Google</button>`;
+  document.getElementById('authForm').innerHTML=`<div id="googleButton" style="display:flex;justify-content:center;min-height:44px"></div><button class="btn" style="width:100%;margin-top:12px" onclick="googleAdmin()">Continue with Google</button>`;setTimeout(initGoogleAdmin,0);
 }
-const GOOGLE_CLIENT_ID='45077632541-3ge0j47jf4tf8b4963hvn1tv.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID='45077632541-3ge0j47jf4tf8b4963hvn1tv3un60ofr.apps.googleusercontent.com';
+// Existing Google OAuth callback used by the Shopping/Seller apps. It is NOT changed.
+// Admin uses the same Google OAuth Client ID through Google Identity Services +
+// Supabase signInWithIdToken, so the browser is not sent to a local callback.
+const SHARED_GOOGLE_CALLBACK='https://xltyakylnntzlxhcggil.supabase.co/auth/v1/callback';
 
+let googleAdminReady=false;
 function initGoogleAdmin(){
   if(!window.google?.accounts?.id){
-    toast('Google Sign-In is loading. Please try again.');
+    toast('Google Sign-In is still loading. Please try again.');
     return;
   }
-  google.accounts.id.initialize({
-    client_id:GOOGLE_CLIENT_ID,
-    callback:async (response)=>{
-      try{
-        if(!response?.credential) throw new Error('Google did not return an ID token.');
-        const {data,error}=await SB.auth.signInWithIdToken({
-          provider:'google',
-          token:response.credential
-        });
-        if(error) throw error;
-        if(data?.session) await enterAdminSession(data.session);
-      }catch(e){
-        console.error('Google login failed',e);
-        toast(e.message||'Google login failed');
-      }
-    },
-    auto_select:false,
-    cancel_on_tap_outside:true
-  });
-  google.accounts.id.prompt();
+  try{
+    google.accounts.id.initialize({
+      client_id:GOOGLE_CLIENT_ID,
+      callback:async(response)=>{
+        try{
+          if(!response?.credential) throw new Error('Google did not return an ID token.');
+          const {data,error}=await SB.auth.signInWithIdToken({
+            provider:'google',
+            token:response.credential
+          });
+          if(error) throw error;
+          if(data?.session){
+            await enterAdminSession(data.session);
+          }else{
+            throw new Error('Supabase did not create an Admin session.');
+          }
+        }catch(e){
+          console.error('Admin Google sign-in failed:',e);
+          toast(e?.message||'Google sign-in failed');
+        }
+      },
+      auto_select:false,
+      cancel_on_tap_outside:true,
+      use_fedcm_for_prompt:true
+    });
+    googleAdminReady=true;
+    const host=document.getElementById('googleButton');
+    if(host){
+      host.innerHTML='';
+      google.accounts.id.renderButton(host,{
+        type:'standard',
+        theme:'outline',
+        size:'large',
+        text:'continue_with',
+        shape:'rectangular',
+        width:360
+      });
+    }
+  }catch(e){
+    console.error('Google Identity Services init failed:',e);
+    toast('Google Sign-In could not be initialized.');
+  }
+}
+function googleAdmin(){
+  if(!googleAdminReady) initGoogleAdmin();
+  else google.accounts.id.prompt();
 }
 
-function googleAdmin(){ initGoogleAdmin(); }
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
 const tabs=[['dashboard','⌂','Home'],['sellers','🏪','Sellers'],['products','📦','Products'],['orders','🛒','Orders'],['more','☰','More']];
 function render(){document.getElementById('brandName').textContent=(state.market.name||'SUKKUR BAZAR').toUpperCase();document.getElementById('topBack').classList.toggle('hidden',state.history.length===0||state.page==='dashboard');document.getElementById('bottom').innerHTML=tabs.map(x=>`<button class="${(state.page===x[0]||(x[0]==='more'&&['earnings','customers','categories','support','notifications','ads','deals','delivery','market','settings'].includes(state.page)))?'on':''}" onclick="${x[0]==='more'?'openMore()':`go('${x[0]}')`}"><b>${x[1]}</b>${x[2]}</button>`).join('');let fn=window[state.page]||dashboard;document.getElementById('main').innerHTML=fn()}
