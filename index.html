@@ -8,7 +8,7 @@
 const SB_URL='https://cczwffmbjythssnvlund.supabase.co';
 const SB_KEY='sb_publishable_oPe8Cwc_QbtzMqWDZ9YLIQ_dyCyeHi2';
 const ADMIN_URL='https://sukkurbazaradmin.netlify.app/';
-const SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit'}});
+const SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
 
 // Always send Google OAuth back to the live Admin Panel. Never use live development host.
 function getOAuthRedirect(){ return ADMIN_URL; }
@@ -20,10 +20,8 @@ async function finishOAuthCallback(){
     if(code){
       const {data,error}=await SB.auth.exchangeCodeForSession(code);
       if(error) throw error;
-      if(data?.session){
-        window.history.replaceState({},document.title,'/');
-        return data.session;
-      }
+      window.history.replaceState({},document.title,window.location.pathname);
+      if(data?.session) return data.session;
     }
     const {data,error}=await SB.auth.getSession();
     if(error) throw error;
@@ -117,13 +115,18 @@ function authMode(){
 }
 async function googleAdmin(){
   try{
-    const redirectTo=getOAuthRedirect();
     const {error}=await SB.auth.signInWithOAuth({
       provider:'google',
-      options:{redirectTo,queryParams:{access_type:'offline',prompt:'select_account'}}
+      options:{
+        redirectTo:ADMIN_URL,
+        queryParams:{prompt:'select_account'}
+      }
     });
-    if(error)throw error;
-  }catch(e){toast(e.message||'Google login failed')}
+    if(error) throw error;
+  }catch(e){
+    console.error('Google login failed',e);
+    toast(e.message||'Google login failed');
+  }
 }
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
 const tabs=[['dashboard','⌂','Home'],['sellers','🏪','Sellers'],['products','📦','Products'],['orders','🛒','Orders'],['more','☰','More']];
