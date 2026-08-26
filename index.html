@@ -9,9 +9,13 @@ const SB_URL='https://cczwffmbjythssnvlund.supabase.co';
 const SB_KEY='sb_publishable_oPe8Cwc_QbtzMqWDZ9YLIQ_dyCyeHi2';
 const SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
 function getOAuthRedirect(){
+  // Google OAuth must return to the live Netlify admin app, not localhost.
+  const liveAdmin='https://sukkurbazaradmin.netlify.app/';
   const origin=window.location.origin;
-  const path=window.location.pathname.endsWith('/')?window.location.pathname:window.location.pathname.replace(/[^/]*$/, '');
-  return origin + path;
+  if(origin==='http://localhost:3000' || origin==='http://localhost:8158' || origin==='http://127.0.0.1:3000' || origin==='http://127.0.0.1:8158' || origin==='null' || origin==='file://'){
+    return liveAdmin;
+  }
+  return origin + (window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname.replace(/[^/]*$/, ''));
 }
 async function finishOAuthCallback(){
   try{
