@@ -104,66 +104,27 @@ function authMode(){
   state.authMode='google';
   document.getElementById('authTitle').textContent='Admin Access';
   document.getElementById('authText').textContent='Only the authorized Google Admin account can access this panel.';
-  document.getElementById('authForm').innerHTML=`<div id="googleButton" style="display:flex;justify-content:center;min-height:44px"></div><button class="btn" style="width:100%;margin-top:12px" onclick="googleAdmin()">Continue with Google</button>`;setTimeout(initGoogleAdmin,0);
+  document.getElementById('authForm').innerHTML=`<button class="btn" style="width:100%;margin-top:4px" onclick="googleAdmin()">Continue with Google</button>`;
 }
 const GOOGLE_CLIENT_ID='45077632541-3ge0j47jf4tf8b4963hvn1tv3un60ofr.apps.googleusercontent.com';
-// Existing Google OAuth callback used by the Shopping/Seller apps. It is NOT changed.
-// Admin uses the same Google OAuth Client ID through Google Identity Services +
-// Supabase signInWithIdToken, so the browser is not sent to a local callback.
 const SHARED_GOOGLE_CALLBACK='https://xltyakylnntzlxhcggil.supabase.co/auth/v1/callback';
 
-let googleAdminReady=false;
-function initGoogleAdmin(){
-  if(!window.google?.accounts?.id){
-    toast('Google Sign-In is still loading. Please try again.');
-    return;
-  }
+// Same Google OAuth method used by the Seller and Shopping apps.
+// The Google Client ID is kept here for reference; Supabase OAuth uses
+// the Google provider configured in the shared Supabase project.
+async function googleAdmin(){
   try{
-    google.accounts.id.initialize({
-      client_id:GOOGLE_CLIENT_ID,
-      callback:async(response)=>{
-        try{
-          if(!response?.credential) throw new Error('Google did not return an ID token.');
-          const {data,error}=await SB.auth.signInWithIdToken({
-            provider:'google',
-            token:response.credential
-          });
-          if(error) throw error;
-          if(data?.session){
-            await enterAdminSession(data.session);
-          }else{
-            throw new Error('Supabase did not create an Admin session.');
-          }
-        }catch(e){
-          console.error('Admin Google sign-in failed:',e);
-          toast(e?.message||'Google sign-in failed');
-        }
-      },
-      auto_select:false,
-      cancel_on_tap_outside:true,
-      use_fedcm_for_prompt:true
+    const {data,error}=await SB.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo:ADMIN_URL}
     });
-    googleAdminReady=true;
-    const host=document.getElementById('googleButton');
-    if(host){
-      host.innerHTML='';
-      google.accounts.id.renderButton(host,{
-        type:'standard',
-        theme:'outline',
-        size:'large',
-        text:'continue_with',
-        shape:'rectangular',
-        width:360
-      });
-    }
+    if(error) throw error;
+    // Supabase redirects the browser to Google automatically.
+    return data;
   }catch(e){
-    console.error('Google Identity Services init failed:',e);
-    toast('Google Sign-In could not be initialized.');
+    console.error('Admin Google OAuth failed:',e);
+    toast(e?.message||'Google sign-in failed');
   }
-}
-function googleAdmin(){
-  if(!googleAdminReady) initGoogleAdmin();
-  else google.accounts.id.prompt();
 }
 
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
