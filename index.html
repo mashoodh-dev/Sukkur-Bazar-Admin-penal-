@@ -7,10 +7,51 @@
 <script>
 const SB_URL='https://cczwffmbjythssnvlund.supabase.co';
 const SB_KEY='sb_publishable_oPe8Cwc_QbtzMqWDZ9YLIQ_dyCyeHi2';
-const SB=window.supabase.createClient(SB_URL,SB_KEY);
+const SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
+function getOAuthRedirect(){
+  const origin=window.location.origin;
+  const path=window.location.pathname.endsWith('/')?window.location.pathname:window.location.pathname.replace(/[^/]*$/, '');
+  return origin + path;
+}
+async function finishOAuthCallback(){
+  try{
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get('code');
+    if(code){
+      const {data,error}=await SB.auth.exchangeCodeForSession(code);
+      if(error) throw error;
+      if(data?.session){
+        window.history.replaceState({},document.title,window.location.pathname);
+        return data.session;
+      }
+    }
+    const {data}=await SB.auth.getSession();
+    return data?.session||null;
+  }catch(e){
+    console.warn('OAuth callback',e);
+    return null;
+  }
+}
 let dbReady=false, dbUser=null;
+SB.auth.onAuthStateChange((event,session)=>{
+  dbUser=session?.user||null;
+  dbReady=!!dbUser;
+  if(event==='SIGNED_IN' && session){
+    state.auth=true; state.page='dashboard'; state.history=[];
+    document.getElementById('auth')?.classList.add('hidden');
+    document.getElementById('app')?.classList.remove('hidden');
+    setTimeout(async()=>{ try{ await dbLoadAll(); save(); render(); }catch(e){ console.warn(e); } },0);
+  }
+  if(event==='SIGNED_OUT'){state.auth=false;document.getElementById('app')?.classList.add('hidden');document.getElementById('auth')?.classList.remove('hidden');authMode('login');}
+});
 async function dbBoot(){
-  try{const {data,error}=await SB.auth.getSession(); if(error) throw error; dbUser=data.session?.user||null; if(dbUser){dbReady=true; await dbLoadAll(); return true;} }catch(e){console.warn('Supabase startup',e)}
+  try{
+    await finishOAuthCallback();
+    const {data,error}=await SB.auth.getSession();
+    if(error) throw error;
+    dbUser=data.session?.user||null;
+    if(dbUser){dbReady=true; return true;}
+  }catch(e){console.warn('Supabase startup',e)}
   return false;
 }
 async function dbRequireAdmin(){
@@ -92,7 +133,7 @@ const KEY='sukkur_bazar_admin_panel_v3';
 const seed={auth:false,authMode:'login',page:'dashboard',history:[],accounts:[{id:'admin@sukkurbazar',name:'Sukkur Bazar Admin',phone:'',password:'admin123'}],admin:{name:'Sukkur Bazar Admin',phone:'',profile:''},market:{name:'Sukkur Bazar',tagline:'Har Zaroorat, Ab Aapke Shehar Mein.',logo:'',supportPhone:'',supportWhatsapp:'',address:''},categories:[{id:1,name:'Grocery',icon:'🛒',active:true},{id:2,name:'Beauty & Cosmetics',icon:'💄',active:true},{id:3,name:'Fashion',icon:'👕',active:true},{id:4,name:'Electronics',icon:'📱',active:true}],deals:[{id:1,title:'Up to 50%',subtitle:'Beauty & Cosmetics',category:'Beauty & Cosmetics',active:true},{id:2,title:'Daily Deals',subtitle:'Grocery essentials',category:'Grocery',active:true},{id:3,title:'Flash Sale',subtitle:'Electronics & accessories',category:'Electronics',active:true},{id:4,title:'New Arrivals',subtitle:'Fashion & lifestyle',category:'Fashion',active:true}],sellers:[{id:1,name:'Ali',phone:'03324423708',shop:'Al-Madina Store',category:'Grocery',address:'Sukkur, Sindh',status:'Active',open:true},{id:2,name:'Ahmed',phone:'03001234567',shop:'Sukkur Super Mart',category:'Grocery',address:'Military Road, Sukkur',status:'Pending',open:true}],customers:[{id:1,name:'Customer Demo',phone:'03000000000',orders:2,status:'Active',created:'22/08/2026'},{id:2,name:'Ali',phone:'03324423708',orders:1,status:'Active',created:'22/08/2026'},{id:3,name:'Ahmed',phone:'03001234567',orders:1,status:'Active',created:'22/08/2026'}],products:[{id:1,name:'Premium Basmati Rice 5kg',shop:'Al-Madina Store',category:'Grocery',price:1450,stock:25,status:'Active'},{id:2,name:'Cooking Oil 5 Litre',shop:'Sukkur Super Mart',category:'Grocery',price:2750,stock:3,status:'Active'},{id:3,name:'Long Lasting Perfume',shop:'Glow Cosmetics',category:'Beauty & Cosmetics',price:899,stock:12,status:'Active'}],orders:[{id:'SB-05166839',customer:'Ali',phone:'03324423708',shop:'Al-Madina Store',total:1600,payment:'Cash on Delivery',delivery:'Sukkur Bazar Delivery',status:'New',date:'22/08/2026'},{id:'SB-05166810',customer:'Ahmed',phone:'03001234567',shop:'Al-Madina Store',total:1948,payment:'JazzCash',delivery:'Seller Delivery',status:'Processing',date:'22/08/2026'}],complaints:[{id:1,name:'Customer Demo',phone:'03000000000',subject:'Need help with order',message:'Please contact me regarding my order.',date:'Today',status:'New'}],notifications:[{id:1,title:'New seller signup',text:'A seller is waiting for review.',time:'Just now',read:false},{id:2,title:'Low stock alert',text:'Cooking Oil 5 Litre is low in stock.',time:'Today',read:false}],ads:[],delivery:[{id:1,seller:'Al-Madina Store',type:'Admin / Sukkur Bazar Delivery',status:'Active',note:'Internal arrangement'}]};
 let state=JSON.parse(JSON.stringify(seed));
 function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)state={...state,...x};if(!Array.isArray(state.deals))state.deals=seed.deals.map(x=>({...x}));if(!Array.isArray(state.categories))state.categories=seed.categories.map(x=>({...x}))}catch(e){}}function save(){localStorage.setItem(KEY,JSON.stringify(state))}function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function money(x){return 'Rs. '+Number(x||0).toLocaleString('en-PK')}function toast(t){let e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window._t);window._t=setTimeout(()=>e.style.display='none',2200)}
-function authMode(m){state.authMode=m;document.getElementById('loginTab').classList.toggle('on',m==='login');document.getElementById('signupTab').classList.toggle('on',m==='signup');document.getElementById('authTitle').textContent=m==='login'?'Admin Login':'Create Admin Account';document.getElementById('authText').textContent=m==='login'?'Secure access to Sukkur Bazar management.':'Create your local startup admin account.';let f=document.getElementById('authForm');if(m==='login')f.innerHTML=`<label>Admin ID / Email</label><input id="loginId" class="input" placeholder="Admin ID or email"><br><br><label>Password</label><div class="pw"><input id="loginPass" class="input" type="password" placeholder="Enter password"><button class="eye" type="button" onclick="togglePw('loginPass',this)">👁️</button></div><div style="margin-top:8px"><button class="link" onclick="forgotPassword()">Forgot Password?</button></div><br><button class="btn" style="width:100%" onclick="loginAdmin()">Login to Admin Panel</button><p class="muted" style="font-size:12px">Create an account from Sign Up if you are a new admin.</p>`;else f.innerHTML=`<label>Admin Name</label><input id="signupName" class="input" placeholder="Your name"><br><br><label>Admin ID / Email</label><input id="signupId" class="input" placeholder="email or admin ID"><br><br><label>Mobile Number</label><input id="signupPhone" class="input" placeholder="03XXXXXXXXX"><br><br><label>Password</label><div class="pw"><input id="signupPass" class="input" type="password" placeholder="Create password"><button class="eye" type="button" onclick="togglePw('signupPass',this)">👁️</button></div><br><label>Confirm Password</label><div class="pw"><input id="signupPass2" class="input" type="password" placeholder="Confirm password"><button class="eye" type="button" onclick="togglePw('signupPass2',this)">👁️</button></div><br><button class="btn" style="width:100%" onclick="signupAdmin()">Create Account</button>`}
+function authMode(m){state.authMode=m;document.getElementById('loginTab').classList.toggle('on',m==='login');document.getElementById('signupTab').classList.toggle('on',m==='signup');document.getElementById('authTitle').textContent=m==='login'?'Admin Login':'Create Admin Account';document.getElementById('authText').textContent=m==='login'?'Secure access to Sukkur Bazar management.':'Create your local startup admin account.';let f=document.getElementById('authForm');if(m==='login')f.innerHTML=`<label>Admin ID / Email</label><input id="loginId" class="input" placeholder="Admin ID or email"><br><br><label>Password</label><div class="pw"><input id="loginPass" class="input" type="password" placeholder="Enter password"><button class="eye" type="button" onclick="togglePw('loginPass',this)">👁️</button></div><div style="margin-top:8px"><button class="link" onclick="forgotPassword()">Forgot Password?</button></div><br><button class="btn" style="width:100%" onclick="loginAdmin()">Login to Admin Panel</button><div style="text-align:center;margin:12px 0;color:#6d7a76">OR</div><button class="btn out" style="width:100%" onclick="googleAdmin()">Continue with Google</button><p class="muted" style="font-size:12px">Create an account from Sign Up if you are a new admin.</p>`;else f.innerHTML=`<label>Admin Name</label><input id="signupName" class="input" placeholder="Your name"><br><br><label>Admin ID / Email</label><input id="signupId" class="input" placeholder="email or admin ID"><br><br><label>Mobile Number</label><input id="signupPhone" class="input" placeholder="03XXXXXXXXX"><br><br><label>Password</label><div class="pw"><input id="signupPass" class="input" type="password" placeholder="Create password"><button class="eye" type="button" onclick="togglePw('signupPass',this)">👁️</button></div><br><label>Confirm Password</label><div class="pw"><input id="signupPass2" class="input" type="password" placeholder="Confirm password"><button class="eye" type="button" onclick="togglePw('signupPass2',this)">👁️</button></div><br><button class="btn" style="width:100%" onclick="signupAdmin()">Create Account</button><div style="text-align:center;margin:12px 0;color:#6d7a76">OR</div><button class="btn out" style="width:100%" onclick="googleAdmin()">Sign up with Google</button>`}
 function togglePw(id,b){let e=document.getElementById(id);e.type=e.type==='password'?'text':'password';b.textContent=e.type==='password'?'👁️':'🙈'}
 async function loginAdmin(){
   const id=document.getElementById('loginId').value.trim(),p=document.getElementById('loginPass').value;
@@ -103,8 +144,15 @@ async function loginAdmin(){
 async function signupAdmin(){
   const n=document.getElementById('signupName').value.trim(),id=document.getElementById('signupId').value.trim(),ph=document.getElementById('signupPhone').value.trim(),p=document.getElementById('signupPass').value,p2=document.getElementById('signupPass2').value;
   if(!n||!id||!p)return toast('Please complete required fields');if(p!==p2)return toast('Passwords do not match');
-  try{const {data,error}=await SB.auth.signUp({email:id,password:p,options:{data:{full_name:n,name:n,phone:ph,role:'admin'}}});if(error)throw error;if(data.session){dbUser=data.user;dbReady=true;state.auth=true;state.admin.name=n;state.admin.phone=ph;await dbLoadAll();save();showApp();toast('Admin account created ✓')}else toast('Account created. Confirm email if Supabase requires it.');}
+  try{const {data,error}=await SB.auth.signUp({email:id,password:p,options:{data:{full_name:n,name:n,phone:ph,role:'admin'}}});if(error)throw error;if(data.session){dbUser=data.user;dbReady=true;state.auth=true;state.admin.name=n;state.admin.phone=ph;await dbLoadAll();save();showApp();toast('Admin account created ✓')}else toast('Account created. Check your email and confirm the verification link before logging in.');}
   catch(e){toast(e.message||'Admin signup failed')}
+}
+async function googleAdmin(){
+  try{
+    const redirectTo=getOAuthRedirect();
+    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{access_type:'offline',prompt:'select_account'}}});
+    if(error)throw error;
+  }catch(e){toast(e.message||'Google login failed')}
 }
 function forgotPassword(){modal('Reset Password',`<p class="muted">Startup/demo reset flow. Future database can connect this to OTP/email verification.</p><label>Admin ID / Email</label><input id="resetId" class="input"><br><br><label>New Password</label><div class="pw"><input id="resetPass" class="input" type="password"><button class="eye" onclick="togglePw('resetPass',this)">👁️</button></div><br><label>Confirm New Password</label><div class="pw"><input id="resetPass2" class="input" type="password"><button class="eye" onclick="togglePw('resetPass2',this)">👁️</button></div><br><button class="btn" onclick="saveReset()">Update Password</button>`)}function saveReset(){let id=document.getElementById('resetId').value.trim(),p=document.getElementById('resetPass').value,p2=document.getElementById('resetPass2').value,a=state.accounts.find(x=>x.id===id);if(!a)return toast('Admin account not found');if(!p||p!==p2)return toast('Passwords do not match');a.password=p;save();closeModal();authMode('login');toast('Password updated. Please login.')}
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
@@ -141,5 +189,20 @@ function resolveComplaint(i){state.complaints[i].status=state.complaints[i].stat
 async function toggleAd(i){state.ads[i].active=!state.ads[i].active;if(!(await dbSaveAd(state.ads[i]))){state.ads[i].active=!state.ads[i].active;return}save();render()}
 function addDelivery(){simpleForm('Add Delivery Arrangement',[['Seller / Shop','seller',''],['Delivery Type','type','Seller Self Delivery'],['Internal Note','note','']],o=>{if(!o.seller)return toast('Seller / Shop is required');state.delivery.push({id:Date.now(),seller:o.seller,type:o.type,status:'Active',note:o.note});save();go('delivery')})}function editDelivery(i){let x=state.delivery[i];simpleForm('Edit Delivery Arrangement',[['Seller / Shop','seller',x.seller],['Delivery Type','type',x.type],['Internal Note','note',x.note]],o=>{Object.assign(x,o);save();go('delivery')})}
 function readImage(input,target){let f=input.files[0];if(!f)return;let r=new FileReader();r.onload=e=>{window._pendingImage=e.target.result;document.getElementById(target).innerHTML=`<img class="preview" src="${e.target.result}">`};r.readAsDataURL(f)}async function saveMarket(){Object.assign(state.market,{name:document.getElementById('m_name').value.trim()||'Sukkur Bazar',tagline:document.getElementById('m_tag').value.trim(),supportPhone:document.getElementById('m_phone').value.trim(),supportWhatsapp:document.getElementById('m_wa').value.trim(),address:document.getElementById('m_addr').value.trim()});const f=document.querySelector('#marketPreview')?.previousElementSibling?.files?.[0];if(f){try{state.market.logo=await uploadAdminImage(f,'branding')}catch(e){return toast('Logo upload failed: '+e.message)}}else if(window._pendingImage){state.market.logo=window._pendingImage;window._pendingImage=null}if(!(await dbSaveMarket()))return;save();render();toast('Marketplace profile saved ✓')}function saveAdminProfile(){state.admin.name=document.getElementById('a_name').value.trim()||'Admin';state.admin.phone=document.getElementById('a_phone').value.trim();if(window._pendingImage){state.admin.profile=window._pendingImage;window._pendingImage=null}let a=state.accounts[0];if(a){a.name=state.admin.name;a.phone=state.admin.phone}save();render();toast('Admin profile saved')}
-load();try{syncDealsToShopping()}catch(e){};setTimeout(async()=>{document.getElementById('splash').classList.add('hidden');const ok=await dbBoot();if(ok){state.auth=true;showApp()}else{document.getElementById('auth').classList.remove('hidden');authMode('login')}},900);
+load();try{syncDealsToShopping()}catch(e){};
+setTimeout(async()=>{
+  document.getElementById('splash').classList.add('hidden');
+  const session=await finishOAuthCallback();
+  if(session){
+    dbUser=session.user;dbReady=true;state.auth=true;state.page='dashboard';state.history=[];
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    try{await dbLoadAll();save()}catch(e){console.warn('Initial database load',e)}
+    render();
+  }else{
+    const ok=await dbBoot();
+    if(ok){state.auth=true;state.page='dashboard';state.history=[];await dbLoadAll();save();showApp();}
+    else{state.auth=false;document.getElementById('auth').classList.remove('hidden');authMode('login');}
+  }
+},900);
 </script></body></html>
