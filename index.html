@@ -2,7 +2,7 @@
 :root{--g:#123c32;--g2:#1b5a49;--gold:#d9a441;--bg:#f4f7f5;--card:#fff;--muted:#6d7a76;--line:#e3e9e5;--red:#b53a3a}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#18221f}.hidden{display:none!important}.splash{position:fixed;inset:0;background:linear-gradient(145deg,var(--g),#081e18);z-index:9999;color:#fff;display:grid;place-items:center;text-align:center}.mark{width:78px;height:78px;border-radius:24px;background:var(--gold);display:grid;place-items:center;font-size:40px;margin:auto auto 14px}.auth{min-height:100vh;display:grid;place-items:center;padding:18px;background:linear-gradient(145deg,#eef5f1,#fff)}.authbox{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 18px 50px #00000012}.tabs{display:grid;grid-template-columns:1fr 1fr;background:#edf2ef;border-radius:12px;padding:4px;margin:16px 0}.tabs button{border:0;background:transparent;padding:10px;border-radius:9px;font-weight:bold}.tabs button.on{background:var(--g);color:#fff}.input,select,textarea{width:100%;padding:12px;border:1px solid #d9e3de;border-radius:11px;font:inherit;background:#fff}.pw{position:relative}.pw input{padding-right:48px}.eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:19px}.link{border:0;background:none;color:var(--g2);font-weight:bold;padding:4px 0;cursor:pointer}.btn{border:0;background:var(--g);color:#fff;padding:11px 15px;border-radius:11px;font-weight:bold;cursor:pointer}.btn.out{background:#fff;color:#20342d;border:1px solid var(--line)}.btn.gold{background:var(--gold);color:#231b0b}.btn.red{background:#eef2ef;color:#20342d;border:1px solid var(--line)}.top{height:64px;background:var(--g);color:#fff;display:flex;align-items:center;gap:10px;padding:0 15px;position:sticky;top:0;z-index:50}.top .brand{flex:1;font-weight:800}.top small{display:block;font-size:11px;color:#d7e3de;font-weight:normal}.icon{border:0;background:transparent;color:inherit;font-size:22px;cursor:pointer}.main{max-width:1100px;margin:auto;padding:16px 15px 88px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.head h1{margin:0;font-size:23px}.back{border:0;background:#fff;border:1px solid var(--line);width:38px;height:38px;border-radius:11px;font-size:20px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;text-align:left;cursor:pointer;box-shadow:0 4px 18px #00000008}.stat b{display:block;font-size:25px;margin-top:8px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:14px}.card h2{margin:0 0 10px;font-size:17px}.listbtn{width:100%;border:0;background:transparent;padding:12px 0;border-bottom:1px solid var(--line);text-align:left;font:inherit;cursor:pointer;display:flex;justify-content:space-between}.badge{padding:5px 9px;border-radius:99px;background:#eef3f1;font-size:12px}.green{background:#e5f4ea;color:#216d42}.yellow{background:#fff3d8;color:#9a6810}.red{background:#fde8e8;color:#9f3333}.filters{display:flex;gap:8px;margin-bottom:12px}.filters .input{max-width:360px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{font-size:11px;color:#65726d}.table{overflow:auto}.bottom{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);z-index:60;padding-bottom:env(safe-area-inset-bottom)}.bottom button{border:0;background:#fff;color:#65726d;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.bottom button b{font-size:21px;font-weight:normal}.bottom button.on{color:var(--g);font-weight:bold}.modalroot{position:fixed;inset:0;background:#00000080;z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.close{border:0;background:#eef2ef;width:35px;height:35px;border-radius:50%;font-size:18px}.row{display:grid;grid-template-columns:1fr 1fr;gap:11px}.setting{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--g);color:#fff;padding:11px 16px;border-radius:10px;z-index:500;display:none}.preview{max-width:100%;max-height:120px;border-radius:12px;margin-top:8px}.empty{padding:25px;text-align:center;color:var(--muted)}.category-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}.category-row:last-child{border-bottom:0}.category-info{display:flex;align-items:center;gap:12px;min-width:0;font-size:18px}.category-info b{overflow-wrap:anywhere}.category-icon,.category-img{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;flex:0 0 54px}.category-icon{background:#f1f5f3;font-size:28px}.category-img{object-fit:cover;border:1px solid var(--line)}.category-actions{display:flex;gap:8px;flex:0 0 auto}.category-actions .btn{min-width:86px}@media(max-width:500px){.category-row{align-items:flex-start}.category-actions{flex-direction:column}.category-actions .btn{min-width:82px}.category-info{font-size:17px}}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}@media(max-width:500px){.row{grid-template-columns:1fr}.authbox{padding:20px}.grid{gap:9px}.stat{padding:13px}.main{padding-left:11px;padding-right:11px}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body>
 <div id="splash" class="splash"><div><div class="mark">🛡️</div><h1>SUKKUR BAZAR</h1><p>Admin Panel</p></div></div>
-<div id="auth" class="auth hidden"><div class="authbox"><div class="mark">🛡️</div><h2 id="authTitle">Admin Access</h2><p class="muted" id="authText">Only the authorized Google Admin account can access this panel.</p><div id="authForm"></div></div></div>
+<div id="auth" class="auth hidden"><div class="authbox"><div class="mark">🛡️</div><h2 id="authTitle">Admin Access</h2><p class="muted" id="authText">Login with your Sukkur Bazar account.</p><div id="authForm"></div></div></div>
 <div id="app" class="hidden"><header class="top"><button id="topBack" class="icon hidden" onclick="goBack()">←</button><div class="brand"><span id="brandName">SUKKUR BAZAR</span><small>Admin Control Panel</small></div><button class="icon" onclick="go('notifications')">🔔</button><button class="icon" onclick="go('settings')">👤</button></header><main id="main" class="main"></main><nav class="bottom" id="bottom"></nav></div><div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
 const SB_URL='https://xltyakylnntzlxhcggil.supabase.co';
@@ -22,28 +22,25 @@ async function finishOAuthCallback(){
     if(error) throw error;
     return data?.session||null;
   }catch(e){
-    console.warn('Admin session check',e);
+    console.warn('Session check',e);
     return null;
   }
 }
 
 let dbReady=false, dbUser=null;
 
-async function verifyAdminUser(user){
-  if(!user?.id)return false;
-  dbUser=user; dbReady=true;
-  return true;
-}
-
+// Same Supabase OAuth/session system used by the Shopping App.
+// No admin-role verification is performed here. Any authenticated user can enter.
 async function enterAdminSession(session){
   const user=session?.user;
-  if(!user || !(await verifyAdminUser(user))){
+  if(!user){
     state.auth=false;
     document.getElementById('app')?.classList.add('hidden');
     document.getElementById('auth')?.classList.remove('hidden');
-    authMode('login');
+    authMode();
     return false;
   }
+  dbUser=user; dbReady=true;
   state.auth=true; state.page='dashboard'; state.history=[];
   document.getElementById('auth')?.classList.add('hidden');
   document.getElementById('app')?.classList.remove('hidden');
@@ -53,7 +50,7 @@ async function enterAdminSession(session){
 }
 
 SB.auth.onAuthStateChange((event,session)=>{
-  if(session?.user && (event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')){
+  if(session?.user){
     setTimeout(()=>enterAdminSession(session),0);
   }
   if(event==='SIGNED_OUT'){
@@ -71,10 +68,12 @@ async function dbBoot(){
   return await enterAdminSession(session);
 }
 
+// Kept for compatibility with existing panel code; it only checks for a login session.
 async function dbRequireAdmin(){
   if(!dbUser){ const ok=await dbBoot(); if(!ok) return false; }
-  return await verifyAdminUser(dbUser);
+  return !!dbUser;
 }
+
 
 const KEY='sukkur_bazar_admin_panel_v3';
 const seed={auth:false,authMode:'login',page:'dashboard',history:[],accounts:[],admin:{name:'Sukkur Bazar Admin',phone:'',profile:''},market:{name:'Sukkur Bazar',tagline:'Har Zaroorat, Ab Aapke Shehar Mein.',logo:'',supportPhone:'',supportWhatsapp:'',address:''},categories:[{id:1,name:'Grocery',icon:'🛒',active:true},{id:2,name:'Beauty & Cosmetics',icon:'💄',active:true},{id:3,name:'Fashion',icon:'👕',active:true},{id:4,name:'Electronics',icon:'📱',active:true}],deals:[{id:1,title:'Up to 50%',subtitle:'Beauty & Cosmetics',category:'Beauty & Cosmetics',active:true},{id:2,title:'Daily Deals',subtitle:'Grocery essentials',category:'Grocery',active:true},{id:3,title:'Flash Sale',subtitle:'Electronics & accessories',category:'Electronics',active:true},{id:4,title:'New Arrivals',subtitle:'Fashion & lifestyle',category:'Fashion',active:true}],sellers:[{id:1,name:'Ali',phone:'03324423708',shop:'Al-Madina Store',category:'Grocery',address:'Sukkur, Sindh',status:'Active',open:true},{id:2,name:'Ahmed',phone:'03001234567',shop:'Sukkur Super Mart',category:'Grocery',address:'Military Road, Sukkur',status:'Pending',open:true}],customers:[{id:1,name:'Customer Demo',phone:'03000000000',orders:2,status:'Active',created:'22/08/2026'},{id:2,name:'Ali',phone:'03324423708',orders:1,status:'Active',created:'22/08/2026'},{id:3,name:'Ahmed',phone:'03001234567',orders:1,status:'Active',created:'22/08/2026'}],products:[{id:1,name:'Premium Basmati Rice 5kg',shop:'Al-Madina Store',category:'Grocery',price:1450,stock:25,status:'Active'},{id:2,name:'Cooking Oil 5 Litre',shop:'Sukkur Super Mart',category:'Grocery',price:2750,stock:3,status:'Active'},{id:3,name:'Long Lasting Perfume',shop:'Glow Cosmetics',category:'Beauty & Cosmetics',price:899,stock:12,status:'Active'}],orders:[{id:'SB-05166839',customer:'Ali',phone:'03324423708',shop:'Al-Madina Store',total:1600,payment:'Cash on Delivery',delivery:'Sukkur Bazar Delivery',status:'New',date:'22/08/2026'},{id:'SB-05166810',customer:'Ahmed',phone:'03001234567',shop:'Al-Madina Store',total:1948,payment:'JazzCash',delivery:'Seller Delivery',status:'Processing',date:'22/08/2026'}],complaints:[{id:1,name:'Customer Demo',phone:'03000000000',subject:'Need help with order',message:'Please contact me regarding my order.',date:'Today',status:'New'}],notifications:[{id:1,title:'New seller signup',text:'A seller is waiting for review.',time:'Just now',read:false},{id:2,title:'Low stock alert',text:'Cooking Oil 5 Litre is low in stock.',time:'Today',read:false}],ads:[],delivery:[{id:1,seller:'Al-Madina Store',type:'Admin / Sukkur Bazar Delivery',status:'Active',note:'Internal arrangement'}]};
@@ -87,27 +86,31 @@ function authMode(m){
   renderAuth();
 }
 function renderAuth(){
- const f=document.getElementById('authForm');
- if(state.authMode==='login') f.innerHTML=`<label>Email</label><input id="aEmail" type="email" placeholder="you@example.com" required><label>Password</label><input id="aPass" type="password" placeholder="Enter password" required><button class="btn" type="button" onclick="signInWithEmail()">Login</button><div style="text-align:center;margin:12px 0;color:#718078">OR</div><button type="button" class="btn" onclick="googleAuth()">Continue with Google</button><br><br><button type="button" class="link" onclick="authMode('signup')">Create Account</button>`;
- else f.innerHTML=`<label>Your Name</label><input id="aName" required placeholder="Full name"><label>Email</label><input id="aEmail" type="email" required placeholder="you@example.com"><label>Password</label><input id="aPass" type="password" required placeholder="Create password"><button class="btn" type="button" onclick="signUpWithEmail()">Create Account</button><div style="text-align:center;margin:12px 0;color:#718078">OR</div><button type="button" class="btn" onclick="googleAuth()">Sign up with Google</button><br><br><button type="button" class="link" onclick="authMode('login')">Already have an account? Login</button>`;
+  const f=document.getElementById('authForm');
+  f.innerHTML=`<div style="display:grid;gap:11px">
+    <button type="button" class="btn" onclick="googleAuth()">Continue with Google</button>
+    <small style="text-align:center;color:var(--muted)">Use your Sukkur Bazar Google account. The same Supabase OAuth session is shared with the Shopping/Seller apps.</small>
+  </div>`;
 }
-async function signInWithEmail(){
- const email=document.getElementById('aEmail').value.trim().toLowerCase(), pass=document.getElementById('aPass').value;
- if(!email||!pass)return toast('Please complete all fields');
- const {error}=await SB.auth.signInWithPassword({email,password:pass});
- if(error)return toast(error.message);
-}
-async function signUpWithEmail(){
- const email=document.getElementById('aEmail').value.trim().toLowerCase(), pass=document.getElementById('aPass').value, name=document.getElementById('aName').value.trim();
- if(!email||!pass||!name)return toast('Please complete all fields');
- const {data,error}=await SB.auth.signUp({email,password:pass,options:{data:{full_name:name,name}}});
- if(error)return toast(error.message);
- if(data.session){await enterAdminSession(data.session);toast('Account created ✓')}else toast('Account created. Check your email to confirm login.');
-}
+let authRedirectInProgress=false;
 async function googleAuth(){
- const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});
- if(error)toast(error.message);
+  if(authRedirectInProgress)return;
+  authRedirectInProgress=true;
+  try{
+    sessionStorage.setItem('sb_google_login','1');
+    const redirectTo=window.location.origin+window.location.pathname;
+    const {error}=await SB.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo,queryParams:{access_type:'offline',prompt:'select_account'}}
+    });
+    if(error)throw error;
+  }catch(e){
+    sessionStorage.removeItem('sb_google_login');
+    authRedirectInProgress=false;
+    toast(e.message||'Google login failed');
+  }
 }
+
 
 function showApp(){document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}
 const tabs=[['dashboard','⌂','Home'],['sellers','🏪','Sellers'],['products','📦','Products'],['orders','🛒','Orders'],['more','☰','More']];
@@ -125,7 +128,7 @@ function notifications(){state.notifications.forEach(x=>x.read=true);save();retu
 function ads(){return head('Paid Banners & Advertisements','Only Admin can add and manage paid promotions')+`<div class="card"><p class="muted">Businesses or sellers who pay for promotion can have their advertisement uploaded here by Admin.</p><button class="btn gold" onclick="addAd()">＋ Add Paid Advertisement</button></div><div class="card">${state.ads.length?state.ads.map((x,i)=>`<div class="listbtn"><span>${x.image?`<img src="${x.image}" style="width:55px;height:38px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">`:''}<b>${esc(x.title)}</b><br><small class="muted">${esc(x.business)} · ${esc(x.start)} to ${esc(x.end)}</small></span><button class="btn out" onclick="toggleAd(${i})">${x.active?'Active':'Inactive'}</button></div>`).join(''):'<div class="empty">No paid advertisements yet</div>'}</div>`}
 function deals(){return head('Deals & Offers','Manage all 4 Shopping App offer cards from Admin Panel')+`<div class="card"><p class="muted">These 4 Shopping App offer cards are controlled by Admin. They are synced locally for the Shopping App; connect the same Supabase marketplace_settings/deals data when the Shopping App reads from the database.</p></div><div class="card">${state.deals.map((x,i)=>`<div class="listbtn"><span><b>${esc(x.title)}</b><br><small class="muted">${esc(x.subtitle)} · ${esc(x.category)}</small></span><button class="btn out" onclick="editDeal(${i})">Manage</button></div>`).join('')}</div>`}function editDeal(i){let x=state.deals[i];if(!x)return;simpleForm('Edit Offer Card',[['Offer Heading','title',x.title],['Offer Description','subtitle',x.subtitle],['Category','category',x.category]],o=>{x.title=o.title||x.title;x.subtitle=o.subtitle||x.subtitle;x.category=o.category||x.category;save();syncDealsToShopping();go('deals',false);toast('Offer card updated')})}function syncDealsToShopping(){try{let k='sukkur_bazar_admin_settings_v1',x=JSON.parse(localStorage.getItem(k)||'{}');x.deals=state.deals.filter(d=>d.active!==false).map(d=>({title:d.title,subtitle:d.subtitle,category:d.category}));localStorage.setItem(k,JSON.stringify(x))}catch(e){}}function delivery(){return head('Seller–Admin Delivery Arrangement','Internal arrangement between Seller and Admin — not a customer payment setting')+`<div class="card"><button class="btn" onclick="addDelivery()">＋ Add Arrangement</button></div><div class="card">${state.delivery.map((x,i)=>`<div class="listbtn"><span><b>${esc(x.seller)}</b><br><small class="muted">${esc(x.type)} · ${esc(x.note)}</small></span><span>${badge(x.status)} <button class="btn out" onclick="editDelivery(${i})">Edit</button></span></div>`).join('')}</div>`}
 function market(){return head('Marketplace Profile & Branding','Future-ready central branding for Shopping and Seller apps')+`<div class="card"><div class="row"><div><label>Marketplace / App Name</label><input id="m_name" class="input" value="${esc(state.market.name)}"></div><div><label>Tagline</label><input id="m_tag" class="input" value="${esc(state.market.tagline)}"></div><div><label>Support Phone</label><input id="m_phone" class="input" value="${esc(state.market.supportPhone)}"></div><div><label>Support WhatsApp</label><input id="m_wa" class="input" value="${esc(state.market.supportWhatsapp)}"></div></div><br><label>Business Address</label><textarea id="m_addr" class="input">${esc(state.market.address)}</textarea><br><br><label>Marketplace Logo</label><input type="file" accept="image/*" onchange="readImage(this,'marketPreview')"><div id="marketPreview">${state.market.logo?`<img class="preview" src="${state.market.logo}">`:'<small class="muted">No logo uploaded</small>'}</div><br><button class="btn" onclick="saveMarket()">Save Marketplace Profile</button></div>`}
-function settings(){return head('Admin Profile & Settings','Profile, account and security')+`<div class="card"><h2>Admin Profile</h2><div class="row"><div><label>Admin Name</label><input id="a_name" class="input" value="${esc(state.admin.name)}"></div><div><label>Mobile Number</label><input id="a_phone" class="input" value="${esc(state.admin.phone)}"></div></div><br><label>Profile Picture</label><input type="file" accept="image/*" onchange="readImage(this,'adminPreview')"><div id="adminPreview">${state.admin.profile?`<img class="preview" src="${state.admin.profile}">`:''}</div><br><button class="btn" onclick="saveAdminProfile()">Save Profile</button></div><div class="card"><h2>Security</h2><p class="muted">This Admin Panel uses Google sign-in only.</p><button class="btn red" onclick="logout()">Logout</button></div>`}
+function settings(){return head('Admin Profile & Settings','Profile, account and security')+`<div class="card"><h2>Admin Profile</h2><div class="row"><div><label>Admin Name</label><input id="a_name" class="input" value="${esc(state.admin.name)}"></div><div><label>Mobile Number</label><input id="a_phone" class="input" value="${esc(state.admin.phone)}"></div></div><br><label>Profile Picture</label><input type="file" accept="image/*" onchange="readImage(this,'adminPreview')"><div id="adminPreview">${state.admin.profile?`<img class="preview" src="${state.admin.profile}">`:''}</div><br><button class="btn" onclick="saveAdminProfile()">Save Profile</button></div><div class="card"><h2>Security</h2><p class="muted">This panel uses the same Google/Supabase login session as the Shopping and Seller apps.</p><button class="btn red" onclick="logout()">Logout</button></div>`}
 function openMore(){modal('More Options',`<div>${[['earnings','💰 Marketplace Sales'],['customers','👥 Customers'],['categories','🗂️ Categories'],['support','💬 Support / Complaints'],['notifications','🔔 Notifications'],['ads','📢 Paid Banners & Ads'],['deals','🎯 Deals & Offers'],['delivery','🚚 Delivery Arrangement'],['market','🏷️ Marketplace Profile'],['settings','⚙️ Settings']].map(x=>`<button class="listbtn" onclick="closeModal();go('${x[0]}')">${x[1]} <b>›</b></button>`).join('')}</div>`)}
 function modal(title,html){document.getElementById('modalRoot').innerHTML=`<div class="modalroot" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modalhead"><h2>${title}</h2><button class="close" onclick="closeModal()">×</button></div>${html}</div></div>`}function closeModal(){document.getElementById('modalRoot').innerHTML=''}function logout(){modal('Logout?',`<p>Are you sure you want to logout from the Admin Panel?</p><button class="btn out" onclick="closeModal()">Cancel</button> <button class="btn red" onclick="doLogout()">Logout</button>`)}async function doLogout(){try{await SB.auth.signOut()}catch(e){}dbUser=null;dbReady=false;state.auth=false;state.history=[];save();closeModal();document.getElementById('app').classList.add('hidden');document.getElementById('auth').classList.remove('hidden');authMode()}
 function viewItem(page,i){let x=state[page][i];if(page==='customers'){let os=state.orders.filter(o=>o.customer===x.name||o.phone===x.phone),spend=os.filter(o=>o.status!=='Cancelled').reduce((a,o)=>a+Number(o.total||0),0);modal('Customer Account',`<div class="setting"><b>Name</b><span>${esc(x.name)}</span></div><div class="setting"><b>Mobile</b><span>${esc(x.phone)}</span></div><div class="setting"><b>Account Created</b><span>${esc(x.created||'Not available')}</span></div><div class="setting"><b>Total Orders</b><span>${os.length||x.orders||0}</span></div><div class="setting"><b>Total Spending</b><span>${money(spend)}</span></div><div class="setting"><b>Status</b><span>${badge(x.status)}</span></div><h3>Order History</h3>${os.map(o=>`<div class="card"><b>${esc(o.id)}</b><div class="muted">${esc(o.shop)} · ${esc(o.date||'')}</div><div style="margin-top:6px">${money(o.total)} · ${badge(o.status)}</div></div>`).join('')||'<div class="empty">No orders found for this customer.</div>'}<button class="btn ${x.status==='Active'?'red':''}" onclick="toggleCustomer(${i})">${x.status==='Active'?'Suspend / Block Account':'Activate Account'}</button>`);return}modal('Details',`<div>${Object.entries(x).map(([k,v])=>`<div class="setting"><b>${esc(k)}</b><span>${typeof v==='boolean'?(v?'Yes':'No'):esc(v)}</span></div>`).join('')}</div>`)}function toggleCustomer(i){state.customers[i].status=state.customers[i].status==='Active'?'Suspended':'Active';save();closeModal();go('customers',false);toast('Customer account updated')}
